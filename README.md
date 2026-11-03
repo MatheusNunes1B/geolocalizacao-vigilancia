@@ -193,3 +193,19 @@ Os testes de navegador verificam cadastro, captura com geolocalização **simula
 - [Capacitor Geolocation v8: API, permissões e códigos de erro](https://capacitorjs.com/docs/apis/geolocation)
 - [Ambiente de desenvolvimento do Capacitor](https://capacitorjs.com/docs/getting-started/environment-setup)
 - [Capacitor Android](https://capacitorjs.com/docs/android)
+
+## APK pelo GitHub Actions
+
+O workflow **Gerar APK Android** executa automaticamente em pushes para main e pull requests, e também pode ser iniciado manualmente em **Actions > Gerar APK Android > Run workflow**.
+
+O pipeline configura Node.js 22, Java 21 e Android SDK 36, instala as dependências com npm ci, executa os testes dos serviços, compila a Web, sincroniza o Capacitor e gera o APK debug. Não precisa de tokens ou chaves de assinatura cadastrados no repositório.
+
+Para baixar o APK:
+
+1. Abra [Actions do repositório](https://github.com/MatheusNunes1B/geolocalizacao-vigilancia/actions).
+2. Selecione uma execução bem-sucedida de **Gerar APK Android**.
+3. Em **Artifacts**, baixe **vigilancia-sanitaria-apk**.
+4. Extraia o ZIP. Ele contém vigilancia-sanitaria-debug.apk e seu checksum SHA-256.
+5. Instale o APK de demonstração no smartphone Android.
+
+O artefato fica disponível por 30 dias. O APK é assinado com a chave debug gerada no runner, destinado à apresentação acadêmica. As chaves debug do computador e do runner podem ser diferentes: se uma instalação de outra origem apresentar conflito de assinatura, exporte os autos antes de desinstalá-la, pois a desinstalação remove os dados locais. O build no Actions não realiza testes de GPS físico.

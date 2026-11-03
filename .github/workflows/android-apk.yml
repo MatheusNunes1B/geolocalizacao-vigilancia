@@ -1,0 +1,81 @@
+name: Gerar APK Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Testar e compilar APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CI: 'true'
+
+    steps:
+      - name: Obter o código
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+          cache-dependency-path: |
+            android/**/*.gradle
+            android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;35.0.0'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Executar testes dos serviços
+        run: npm test
+
+      - name: Compilar Web e sincronizar Capacitor
+        run: npm run android:sync
+
+      - name: Compilar APK de demonstração
+        working-directory: android
+        run: ./gradlew :app:assembleDebug --no-daemon --console=plain
+
+      - name: Preparar APK e checksum
+        run: |
+          mkdir -p artifacts
+          cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/vigilancia-sanitaria-debug.apk
+          cd artifacts
+          sha256sum vigilancia-sanitaria-debug.apk > vigilancia-sanitaria-debug.apk.sha256
+
+      - name: Disponibilizar APK para download
+        uses: actions/upload-artifact@v7
+        with:
+          name: vigilancia-sanitaria-apk
+          path: |
+            artifacts/vigilancia-sanitaria-debug.apk
+            artifacts/vigilancia-sanitaria-debug.apk.sha256
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
